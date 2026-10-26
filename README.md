@@ -32,3 +32,15 @@ The schema validates structure. A separate semantic validator should check uniqu
 ## Current scope
 
 Stage 01: **The Unverified Patch**. The sample story is a design artifact; no Ren'Py runtime implementation or automated tests are included yet.
+
+
+## Ren'Py runtime
+
+The initial Ren'Py project files are in `game/`:
+
+- `game/script.rpy` — game entry point
+- `game/story_adapter.rpy` — JSON-driven dialogue, choices, effects, and scene-link checks
+- `game/options.rpy` — project settings
+- `game/story/stage01.json` — packaged runtime copy of the canonical `story/stage01.json`
+
+When editing the story, update the canonical `story/stage01.json` and copy it to `game/story/stage01.json` so exported Ren'Py builds include the same content. This first runtime pass has not yet been launched in the Ren'Py SDK; run it locally to catch engine-version or UI issues.
