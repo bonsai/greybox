@@ -1,0 +1,138 @@
+{
+  "schema_version": "1.0",
+  "story_id": "greybox.stage01",
+  "title": "未検証のパッチ / The Unverified Patch",
+  "language": "ja",
+  "start_scene": "review_request",
+  "characters": {
+    "player": {
+      "name": "あなた",
+      "role": "junior_engineer"
+    },
+    "ai": {
+      "name": "DEV-AI",
+      "role": "ai_agent"
+    },
+    "lead": {
+      "name": "Tech Lead",
+      "role": "human_supervisor"
+    }
+  },
+  "initial_state": {
+    "time": 10,
+    "budget": 10,
+    "quality": 0,
+    "risk": 0,
+    "verified": false
+  },
+  "scenes": [
+    {
+      "id": "review_request",
+      "type": "dialogue",
+      "speaker": "lead",
+      "text": "計算APIの修正をお願いします。あと10分でリリースです。受け入れ条件は、通常の計算と境界値で正しく動くことです。",
+      "next": "ai_report"
+    },
+    {
+      "id": "ai_report",
+      "type": "dialogue",
+      "speaker": "ai",
+      "text": "修正しました。正常系のテストは通過しています。実装は完了です。",
+      "next": "decision"
+    },
+    {
+      "id": "decision",
+      "type": "choice",
+      "text": "あなたはどう判断しますか？",
+      "choices": [
+        {
+          "id": "ship_now",
+          "text": "すぐにリリースする",
+          "effects": {
+            "time": -1,
+            "risk": 8
+          },
+          "next": "ending_rushed"
+        },
+        {
+          "id": "test_edges",
+          "text": "境界値テストを追加する",
+          "effects": {
+            "time": -3,
+            "budget": -1
+          },
+          "next": "edge_test"
+        },
+        {
+          "id": "read_all",
+          "text": "コードをすべて読む",
+          "effects": {
+            "time": -7,
+            "quality": 1
+          },
+          "next": "full_review"
+        }
+      ]
+    },
+    {
+      "id": "edge_test",
+      "type": "event",
+      "event": "test_boundary_values",
+      "next": "test_result"
+    },
+    {
+      "id": "test_result",
+      "type": "choice",
+      "text": "境界値テストで、ゼロ入力時の不具合が見つかりました。",
+      "choices": [
+        {
+          "id": "ask_fix",
+          "text": "AIに修正を依頼し、再テストする",
+          "effects": {
+            "time": -2,
+            "quality": 3,
+            "risk": -5,
+            "verified": true
+          },
+          "next": "ending_verified"
+        },
+        {
+          "id": "ignore_failure",
+          "text": "影響は小さいと判断してリリースする",
+          "effects": {
+            "risk": 6
+          },
+          "next": "ending_rushed"
+        }
+      ]
+    },
+    {
+      "id": "full_review",
+      "type": "dialogue",
+      "speaker": "player",
+      "text": "コードの構造は理解できました。しかし、残り時間が少ない。全行を読むより、受け入れ条件に直結するテストを先に選ぶべきだったかもしれません。",
+      "next": "ending_reviewed"
+    },
+    {
+      "id": "ending_verified",
+      "type": "ending",
+      "title": "根拠あるリリース",
+      "text": "AIに実装を任せ、人間が受け入れ条件を検証しました。AIの完了報告ではなく、テスト結果を根拠に判断できました。",
+      "outcome": "success"
+    },
+    {
+      "id": "ending_reviewed",
+      "type": "ending",
+      "title": "理解したが、間に合わない",
+      "text": "理解は深まりましたが、確認範囲の選び方に改善の余地があります。すべてを理解することと、必要なことを検証することは同じではありません。",
+      "outcome": "partial"
+    },
+    {
+      "id": "ending_rushed",
+      "type": "ending",
+      "title": "未検証のリリース",
+      "text": "AIの完了報告を、品質の保証と取り違えました。次はリスクに応じて検証範囲を決めましょう。",
+      "outcome": "failure"
+    }
+  ]
+}
