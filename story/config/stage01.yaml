@@ -1,0 +1,73 @@
+# GREYBOX stage settings.
+#
+# 設定（仕様）は YAML、データ（実体）は JSON。
+# このファイルは「こういうステージである」という宣言で、実際の台詞・選択肢は
+# story/stage01.json にある。両者のズレは次で検出する:
+#
+#     python tools/quizgen.py --check
+#
+# 秘密情報はここに書かない。API キーは環境変数から読む（下の llm.*_env）。
+
+schema_version: "1.0"
+
+story:
+  id: greybox.stage01
+  story_file: story/stage01.json
+  quiz_file: story/quiz.stage01.json
+  format_file: story/config/quiz.format.yaml
+  language: ja
+  title: 未検証のパッチ / The Unverified Patch
+
+# 登場人物。story JSON の characters と id / name / role が一致していること。
+characters:
+  player:
+    name: あなた
+    role: junior_engineer
+    goal: 期限内に、根拠のある判断をする
+  ai:
+    name: DEV-AI
+    role: ai_agent
+    goal: 実装を完了し、完了を報告する
+  lead:
+    name: Tech Lead
+    role: human_supervisor
+    goal: 受け入れ条件を満たした状態でリリースする
+
+# 学習目標。クイズはこの goal を測るために存在する。
+goals:
+  - id: demand_evidence
+    description: AI の完了報告ではなく、テスト結果を根拠に判断できる
+    quiz_tags: [verification, evidence]
+  - id: size_verification_to_risk
+    description: リスクに応じて検証範囲を選べる
+    quiz_tags: [risk]
+  - id: delegate_without_abdicating
+    description: 実装は任せても、判断は手放さない
+    quiz_tags: [delegation]
+
+# クイズの量と方針。
+quiz:
+  scene_types: [choice, ending]   # 出題対象にするシーン種別
+  questions_per_scene: 1          # 各対象シーンの目標問題数
+  minimum_total: 3                # これを下回ったら未整備とみなす
+  target_total: 6                 # ここまで自動生成で埋める
+  require_tags: [delegation, verification, evidence, risk]
+  when_exhausted: generate        # generate | recycle | stop
+  max_generated_per_run: 4
+
+# 自動生成（LLM パッチ）の設定。値そのものではなく、環境変数名を書く。
+generation:
+  provider: openai_compatible
+  base_url_env: LLM_BASE_URL
+  api_key_env: LLM_API_KEY
+  model_env: LLM_MODEL
+  temperature: 0.6
+  max_attempts: 2
+  timeout_seconds: 90
+
+# 問題が尽きたときの最終挙動。
+exhausted:
+  # generate が失敗した場合のフォールバック。
+  fallback: recycle               # recycle | stop
+  # recycle: 正答数の少ない問題を復習セットとして返す（データは書き換えない）
+  recycle_count: 3

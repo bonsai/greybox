@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bonsai.github.io/greybox/schema/quiz.schema.json",
+  "title": "GREYBOX Quiz",
+  "description": "Quiz content for a GREYBOX story. Quizzes live in their own file and reference story scenes by id; they are never embedded in story JSON. See docs/adapting.md.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "quiz_id",
+    "story_id",
+    "language",
+    "questions"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Format version. Bump only for breaking changes."
+    },
+    "quiz_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$",
+      "description": "Stable identifier, e.g. greybox.stage01.quiz",
+      "examples": ["greybox.stage01.quiz"]
+    },
+    "story_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$",
+      "description": "The story this quiz belongs to. Must equal story_id in the story file.",
+      "examples": ["greybox.stage01"]
+    },
+    "language": {
+      "type": "string",
+      "pattern": "^[a-z]{2}(?:-[A-Z]{2})?$",
+      "description": "BCP 47 language tag of the question text.",
+      "examples": ["ja"]
+    },
+    "questions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/question"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "snake_case identifier. Unique within its scope."
+    },
+    "question": {
+      "type": "object",
+      "required": ["id", "scene_id", "prompt", "choices", "answer", "explanation"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id",
+          "description": "Question id, unique within the quiz file.",
+          "examples": ["q_evidence_not_claim"]
+        },
+        "scene_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "id of the story scene this question is about. Must exist in the story.",
+          "examples": ["retest_result"]
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The question shown to the player."
+        },
+        "choices": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 6,
+          "items": {
+            "$ref": "#/$defs/choice"
+          }
+        },
+        "answer": {
+          "type": "string",
+          "minLength": 1,
+          "description": "id of the correct choice. Exactly one choice is correct; the correct answer is not marked in choices.",
+          "examples": ["evidence"]
+        },
+        "explanation": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why the answer is correct. Shown after answering."
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "description": "Optional topic tags, e.g. verification, risk, delegation."
+        }
+      },
+      "additionalProperties": false
+    },
+    "choice": {
+      "type": "object",
+      "required": ["id", "text"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id",
+          "description": "Choice id, unique within the question. Referenced by `answer`."
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

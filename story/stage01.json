@@ -23,7 +23,17 @@
     "budget": 10,
     "quality": 0,
     "risk": 0,
-    "verified": false
+    "verified": false,
+    "boundary_bug_found": false,
+    "retest_passed": false
+  },
+  "events": {
+    "test_boundary_values": {
+      "boundary_bug_found": true
+    },
+    "retest_boundary_values": {
+      "retest_passed": true
+    }
   },
   "scenes": [
     {
@@ -90,17 +100,53 @@
           "text": "AIに修正を依頼し、再テストする",
           "effects": {
             "time": -2,
-            "quality": 3,
-            "risk": -5,
-            "verified": true
+            "budget": -1
           },
-          "next": "ending_verified"
+          "next": "ai_refix"
         },
         {
           "id": "ignore_failure",
           "text": "影響は小さいと判断してリリースする",
           "effects": {
             "risk": 6
+          },
+          "next": "ending_rushed"
+        }
+      ]
+    },
+    {
+      "id": "ai_refix",
+      "type": "dialogue",
+      "speaker": "ai",
+      "text": "ゼロ入力の分岐を修正し、境界値テストも追加しました。修正後のテストを実行します。",
+      "next": "retest_event"
+    },
+    {
+      "id": "retest_event",
+      "type": "event",
+      "event": "retest_boundary_values",
+      "next": "retest_result"
+    },
+    {
+      "id": "retest_result",
+      "type": "choice",
+      "text": "再テストの結果、境界値はすべて通過しました。修正内容の説明はまだ受け取っていません。",
+      "choices": [
+        {
+          "id": "ship_with_evidence",
+          "text": "テスト結果を根拠にリリースする",
+          "effects": {
+            "time": -1,
+            "quality": 3,
+            "verified": true
+          },
+          "next": "ending_verified"
+        },
+        {
+          "id": "ship_without_understanding",
+          "text": "テストは通ったので、修正内容は読まずにリリースする",
+          "effects": {
+            "risk": 4
           },
           "next": "ending_rushed"
         }
@@ -131,7 +177,7 @@
       "id": "ending_rushed",
       "type": "ending",
       "title": "未検証のリリース",
-      "text": "AIの完了報告を、品質の保証と取り違えました。次はリスクに応じて検証範囲を決めましょう。",
+      "text": "AIの完了報告や通過したテストを、品質の保証と取り違えました。次はリスクに応じて検証範囲を決めましょう。",
       "outcome": "failure"
     }
   ]

@@ -65,6 +65,13 @@
         ]
       }
     },
+    "events": {
+      "description": "Data-only effects applied when an event scene fires. Event scenes may only reference the names defined here.",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/effects"
+      }
+    },
     "scenes": {
       "type": "array",
       "minItems": 1,

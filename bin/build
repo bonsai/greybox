@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# GREYBOX: build a pc distribution (WSL / macOS / Linux).
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+if [ -z "${RENPY_SDK:-}" ]; then
+  echo "error: RENPY_SDK is not set (example: export RENPY_SDK=/opt/renpy-8.5.3-sdk)" >&2
+  exit 1
+fi
+
+"$RENPY_SDK/renpy.sh" "$PWD" compile
+"$RENPY_SDK/renpy.sh" "$PWD" lint
+"$RENPY_SDK/renpy.sh" "$RENPY_SDK/launcher" distribute "$PWD" --package pc --destination "$PWD/dist"
+
+echo
+echo "built:"
+ls -1 dist/*.zip

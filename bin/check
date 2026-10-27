@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# GREYBOX: run every consistency check that CI runs (WSL / macOS / Linux).
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+python3 tools/sync_story.py --check
+python3 tools/validate_story.py --verbose
+python3 tools/validate_quiz.py
+python3 tools/quizgen.py --check
+python3 -m unittest discover -s tools -p "test_*.py"
+
+echo
+echo "all checks passed"

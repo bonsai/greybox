@@ -1,0 +1,102 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  RENPY_VERSION: "8.5.3"
+
+jobs:
+  validate:
+    name: Validate story data
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dev dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Story copy is in sync
+        run: python tools/sync_story.py --check
+
+      - name: Semantic validation
+        run: python tools/validate_story.py --verbose
+
+      - name: Quiz <-> story consistency
+        run: python tools/validate_quiz.py
+
+      - name: Validator tests
+        run: python -m unittest discover -s tools -p "test_*.py" -v
+
+  build:
+    name: Build Windows distribution
+    needs: validate
+    runs-on: windows-latest
+    env:
+      RENPY_SDK: ${{ runner.temp }}\renpy-sdk
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Ren'Py SDK
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}\renpy-sdk
+          key: renpy-sdk-${{ env.RENPY_VERSION }}
+
+      - name: Download Ren'Py SDK
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "$env:RENPY_SDK\renpy.exe")) {
+            $url = "https://www.renpy.org/dl/$env:RENPY_VERSION/renpy-$env:RENPY_VERSION-sdk.zip"
+            Write-Host "Downloading $url"
+            Invoke-WebRequest -Uri $url -OutFile "$env:RUNNER_TEMP\renpy-sdk.zip"
+            New-Item -ItemType Directory -Force -Path $env:RENPY_SDK | Out-Null
+            tar.exe -xf "$env:RUNNER_TEMP\renpy-sdk.zip" -C $env:RENPY_SDK --strip-components=1
+          }
+          & "$env:RENPY_SDK\renpy.exe" --version
+
+      - name: Compile scripts
+        shell: pwsh
+        run: |
+          & "$env:RENPY_SDK\renpy.exe" "$env:GITHUB_WORKSPACE" compile
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Lint
+        shell: pwsh
+        run: |
+          & "$env:RENPY_SDK\renpy.exe" "$env:GITHUB_WORKSPACE" lint
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Build distribution
+        shell: pwsh
+        run: |
+          & "$env:RENPY_SDK\renpy.exe" "$env:RENPY_SDK\launcher" distribute `
+            "$env:GITHUB_WORKSPACE" --package pc --destination "$env:GITHUB_WORKSPACE\dist"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-ChildItem "$env:GITHUB_WORKSPACE\dist"
+
+      - name: Upload distribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: greybox-windows
+          path: dist/*.zip
+          if-no-files-found: error
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: renpy-logs
+          path: |
+            log.txt
+            errors.txt
+            traceback.txt
+          if-no-files-found: ignore

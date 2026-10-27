@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.0",
+  "quiz_id": "greybox.stage01.quiz",
+  "story_id": "greybox.stage01",
+  "language": "ja",
+  "questions": [
+    {
+      "id": "q_report_not_proof",
+      "scene_id": "decision",
+      "prompt": "AI は「修正しました。正常系のテストは通過しています」と報告した。この報告が保証していることは何か。",
+      "choices": [
+        {
+          "id": "all_requirements",
+          "text": "受け入れ条件（正常系と境界値）のすべてが満たされている"
+        },
+        {
+          "id": "normal_case_only",
+          "text": "正常系は通ったが、境界値はまだ確認されていない"
+        },
+        {
+          "id": "production_ready",
+          "text": "本番環境でも安全に動作する"
+        }
+      ],
+      "answer": "normal_case_only",
+      "explanation": "完了報告が示すのは「正常系が通った」ことだけです。受け入れ条件に境界値が含まれているなら、報告だけでは条件を満たしたことになりません。",
+      "tags": ["delegation", "verification"]
+    },
+    {
+      "id": "q_evidence_over_summary",
+      "scene_id": "retest_result",
+      "prompt": "再テストは通過したが、修正内容の説明はまだ受け取っていない。リリース判断の根拠として最も適切なものはどれか。",
+      "choices": [
+        {
+          "id": "test_and_criteria",
+          "text": "受け入れ条件に対するテスト結果"
+        },
+        {
+          "id": "ai_summary",
+          "text": "AI による修正内容の要約"
+        },
+        {
+          "id": "no_time_left",
+          "text": "残り時間が少ないこと"
+        }
+      ],
+      "answer": "test_and_criteria",
+      "explanation": "判断の根拠は、受け入れ条件を満たしたという検証結果です。AI の要約は補助情報で、根拠の代わりにはなりません。",
+      "tags": ["verification", "evidence"]
+    },
+    {
+      "id": "q_unverified_cost",
+      "scene_id": "ending_rushed",
+      "prompt": "境界値テストを追加せずにリリースした場合、いちばん大きく失われるものは何か。",
+      "choices": [
+        {
+          "id": "time_only",
+          "text": "テストに使わなかった時間だけ"
+        },
+        {
+          "id": "chance_to_detect",
+          "text": "不具合をリリース前に見つける機会"
+        },
+        {
+          "id": "nothing",
+          "text": "失うものは無い。あとで直せばよい"
+        }
+      ],
+      "answer": "chance_to_detect",
+      "explanation": "失うのは時間ではなく、リリース前に欠陥を検出できる機会です。後から直すコストは、利用者に届いた後に発生します。",
+      "tags": ["risk"]
+    }
+  ]
+}

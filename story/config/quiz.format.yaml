@@ -1,0 +1,82 @@
+# GREYBOX quiz format (クイズ形式).
+#
+# 構造の正解は story/quiz.schema.json（JSON Schema）。
+# この YAML は「どんな問題を、どれくらいの長さで、どういう観点で作るか」という
+# 編集方針で、LLM へのプロンプトもここから組み立てる（prompt.*）。
+#
+# プレースホルダ:
+#   {{scene}}   出題対象シーン（id / type / text / choices）
+#   {{count}}   生成する問題数
+#   {{existing}} 既存の問題（重複回避用の要約）
+#   {{rules}}   rules を箇条書きにしたもの
+#   {{goals}}   goals の一覧
+#   {{format}}  この YAML の question_types / style
+
+schema_version: "1.0"
+format_id: greybox.quiz.format.v1
+
+question_types:
+  single_choice:
+    description: 4 択のうち 1 つだけ正しい。正解は choices に印を付けず answer で示す。
+    choices:
+      min: 3
+      max: 4
+    scoring:
+      correct: 1
+      wrong: 0
+
+style:
+  language: ja
+  prompt_max_chars: 160
+  choice_max_chars: 60
+  explanation_max_chars: 200
+  tone: 落ち着いた技術書の語り。煽らない。断定しすぎない。
+  forbid:
+    - "「すべて正しい」「どれも間違い」のような逃げの選択肢"
+    - "「上の A と B の両方」のような相互参照"
+    - "正解が明白すぎる冗談の選択肢"
+
+rules:
+  - 1 問 1 論点。1 つのシーンが教えることだけを問う。
+  - 誤答はもっともらしく、しかし明確に誤りであること。
+  - explanation は「なぜ正しいか」を書く。正解の言い換えにしない。
+  - 正解の choice id は意味のある snake_case（例 test_and_criteria）。a/b/c は禁止。
+  - 既存の問題と同じ問い・同じ言い回しを繰り返さない。
+  - 物語に無い出来事・人物を問題に持ち込まない。
+
+prompt:
+  system: |
+    You write quiz questions for GREYBOX, a short learning game about
+    delegating work to AI, verifying it, and deciding with evidence.
+
+    Output ONLY a JSON array. No prose, no markdown fences, no comments.
+    Each element must match this shape:
+
+      {
+        "id": "q_snake_case",
+        "scene_id": "<one of the given scene ids>",
+        "prompt": "<question in Japanese>",
+        "choices": [{"id": "snake_case", "text": "..."}, ...],
+        "answer": "<id of the correct choice>",
+        "explanation": "<why it is correct, in Japanese>",
+        "tags": ["<one of the given goal tags>"]
+      }
+
+    Format constraints:
+    {{format}}
+
+    Rules:
+    {{rules}}
+
+  user: |
+    Story goals (the quiz must measure these):
+    {{goals}}
+
+    Scenes you may use:
+    {{scene}}
+
+    Already existing questions (do not repeat these ideas or wording):
+    {{existing}}
+
+    Write exactly {{count}} new question(s). Use each scene at most once.
+    Return the JSON array only.
